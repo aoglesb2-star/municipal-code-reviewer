@@ -350,32 +350,32 @@ def index():
 
 @app.route("/review", methods=["POST"])
 def review():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    f = request.files["file"]
-    if not f.filename.endswith(".docx"):
-        return jsonify({"error": "Please upload a .docx file"}), 400
-
     if not ANTHROPIC_API_KEY:
         return jsonify({"error": "ANTHROPIC_API_KEY not configured on server"}), 500
 
+    pasted_text = request.form.get("text", "").strip()
+    uploaded_file = request.files.get("file")
+
+    if pasted_text:
+        text = pasted_text
+    elif uploaded_file:
+        if not uploaded_file.filename.endswith(".docx"):
+            return jsonify({"error": "Please upload a .docx file"}), 400
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "input.docx")
+            uploaded_file.save(input_path)
+            text = extract_text_from_docx(input_path)
+    else:
+        return jsonify({"error": "Please upload a .docx file or paste text"}), 400
+
+    if not text.strip():
+        return jsonify({"error": "Could not extract text from document"}), 400
+
+    review_data = run_claude_review(text)
+
     with tempfile.TemporaryDirectory() as tmpdir:
-        input_path = os.path.join(tmpdir, "input.docx")
         output_path = os.path.join(tmpdir, "review_report.docx")
-        f.save(input_path)
-
-        # Extract text
-        text = extract_text_from_docx(input_path)
-        if not text.strip():
-            return jsonify({"error": "Could not extract text from document"}), 400
-
-        # Run Claude review
-        review_data = run_claude_review(text)
-
-        # Build report
         build_report_docx(review_data, output_path)
-
         return send_file(
             output_path,
             as_attachment=True,
