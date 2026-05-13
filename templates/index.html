@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Municipal Code Clerical Review</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(31,73,125,0.10);
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1F497D;
+      color: white;
+      padding: 2rem 2rem 1.5rem;
+    }
+
+    .card-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 0.3rem;
+    }
+
+    .card-header p {
+      font-size: 0.88rem;
+      opacity: 0.80;
+    }
+
+    .card-body { padding: 2rem; }
+
+    .drop-zone {
+      border: 2.5px dashed #b0c4de;
+      border-radius: 8px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #f7fafd;
+      margin-bottom: 1.4rem;
+    }
+
+    .drop-zone.dragover {
+      border-color: #1F497D;
+      background: #e8f0f9;
+    }
+
+    .drop-zone svg {
+      width: 2.5rem;
+      height: 2.5rem;
+      color: #5a8fc2;
+      margin-bottom: 0.75rem;
+    }
+
+    .drop-zone .label {
+      font-size: 0.95rem;
+      color: #2c4a6e;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .drop-zone .sub {
+      font-size: 0.82rem;
+      color: #7a94ae;
+    }
+
+    .file-name {
+      font-size: 0.88rem;
+      color: #1F497D;
+      font-weight: 600;
+      margin-top: 0.6rem;
+      min-height: 1.2em;
+    }
+
+    .btn {
+      width: 100%;
+      background: #1F497D;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      padding: 0.85rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, opacity 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover:not(:disabled) { background: #163760; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .status {
+      margin-top: 1.2rem;
+      padding: 0.85rem 1rem;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .status.loading {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #e8f0f9;
+      color: #1F497D;
+    }
+
+    .status.error {
+      display: block;
+      background: #fde8e8;
+      color: #c00000;
+    }
+
+    .status.success {
+      display: block;
+      background: #e6f4ea;
+      color: #276221;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid #b0c4de;
+      border-top-color: #1F497D;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .notes {
+      margin-top: 1.6rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.82rem;
+      color: #7a94ae;
+      line-height: 1.6;
+    }
+
+    .notes strong { color: #2c4a6e; }
+
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Municipal Code Clerical Review</h1>
+      <p>Upload a .docx municipal code file — AI reviews it and returns a formatted report.</p>
+    </div>
+    <div class="card-body">
+      <div class="drop-zone" id="drop-zone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5
+               A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0
+               0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625
+               c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125
+               1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
+        </svg>
+        <div class="label">Drop your .docx file here</div>
+        <div class="sub">or click to browse</div>
+        <div class="file-name" id="file-name"></div>
+      </div>
+
+      <input type="file" id="file-input" accept=".docx" />
+
+      <button class="btn" id="submit-btn" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+        </svg>
+        Run Clerical Review
+      </button>
+
+      <div class="status loading" id="status-loading">
+        <div class="spinner"></div>
+        <span>Reviewing document — this takes 30–90 seconds depending on length…</span>
+      </div>
+      <div class="status error" id="status-error"></div>
+      <div class="status success" id="status-success">
+        ✓ Review complete — your report is downloading now.
+      </div>
+
+      <div class="notes">
+        <strong>What this tool does:</strong> Checks spelling, grammar, punctuation,
+        section numbering, internal cross-references, duplicate text, and inconsistent
+        terminology. Returns a formatted Word document report.<br><br>
+        <strong>What it does not do:</strong> Make substantive legal or policy changes.
+        Items requiring drafting authority are flagged but not redrafted.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileName = document.getElementById('file-name');
+    const submitBtn = document.getElementById('submit-btn');
+    const statusLoading = document.getElementById('status-loading');
+    const statusError = document.getElementById('status-error');
+    const statusSuccess = document.getElementById('status-success');
+
+    let selectedFile = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.docx')) setFile(file);
+      else showError('Please drop a .docx file.');
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      selectedFile = file;
+      fileName.textContent = '📄 ' + file.name;
+      submitBtn.disabled = false;
+      clearStatus();
+    }
+
+    function clearStatus() {
+      statusLoading.style.display = 'none';
+      statusError.style.display = 'none';
+      statusSuccess.style.display = 'none';
+    }
+
+    function showError(msg) {
+      clearStatus();
+      statusError.textContent = '⚠ ' + msg;
+      statusError.style.display = 'block';
+    }
+
+    submitBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      clearStatus();
+      submitBtn.disabled = true;
+      statusLoading.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const response = await fetch('/review', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: 'Server error' }));
+          throw new Error(err.error || 'Server error');
+        }
+
+        // Trigger download
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Municipal_Code_Clerical_Review.docx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        statusLoading.style.display = 'none';
+        statusSuccess.style.display = 'block';
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
