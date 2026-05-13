@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Municipal Code Clerical Review — Sign In</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(31,73,125,0.10);
+      max-width: 380px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1F497D;
+      color: white;
+      padding: 2rem 2rem 1.5rem;
+    }
+
+    .card-header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 0.3rem;
+    }
+
+    .card-header p {
+      font-size: 0.88rem;
+      opacity: 0.80;
+    }
+
+    .card-body { padding: 2rem; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2c4a6e;
+      margin-bottom: 0.45rem;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      border: 2px solid #b0c4de;
+      border-radius: 7px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      color: #2c4a6e;
+      background: #f7fafd;
+      margin-bottom: 1.2rem;
+      transition: border-color 0.2s;
+    }
+
+    input[type="password"]:focus {
+      outline: none;
+      border-color: #1F497D;
+      background: white;
+    }
+
+    .btn {
+      width: 100%;
+      background: #1F497D;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      padding: 0.85rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+
+    .btn:hover { background: #163760; }
+
+    .error {
+      background: #fde8e8;
+      color: #c00000;
+      border-radius: 7px;
+      padding: 0.7rem 1rem;
+      font-size: 0.88rem;
+      margin-bottom: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Municipal Code Clerical Review</h1>
+      <p>Enter the password to continue.</p>
+    </div>
+    <div class="card-body">
+      {% if error %}
+        <div class="error">⚠ {{ error }}</div>
+      {% endif %}
+      <form method="POST">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autofocus autocomplete="current-password" />
+        <button type="submit" class="btn">Sign In</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

@@ -3,7 +3,8 @@ import json
 import tempfile
 import mammoth
 import anthropic
-from flask import Flask, request, render_template, send_file, jsonify
+from flask import Flask, request, render_template, send_file, jsonify, session, redirect, url_for
+from functools import wraps
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -13,8 +14,19 @@ import re
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if APP_PASSWORD and not session.get("authenticated"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
 
 SYSTEM_PROMPT = """You are a professional municipal code editor performing a non-substantive clerical review. 
 Your role is to identify and correct only clerical, formatting, and drafting errors — never substantive legal or policy changes.
@@ -343,12 +355,31 @@ def build_report_docx(review_data, output_path):
     doc.save(output_path)
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == APP_PASSWORD:
+            session["authenticated"] = True
+            return redirect(url_for("index"))
+        error = "Incorrect password."
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
+@login_required
 def index():
     return render_template("index.html")
 
 
 @app.route("/review", methods=["POST"])
+@login_required
 def review():
     if not ANTHROPIC_API_KEY:
         return jsonify({"error": "ANTHROPIC_API_KEY not configured on server"}), 500
